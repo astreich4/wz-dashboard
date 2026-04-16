@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Babes, Buybuys & 10 bombs 💣</title>
+<style>
+  :root {
+    --bg: #0d0f1a;
+    --surface: #161927;
+    --surface2: #1e2235;
+    --border: #2a2f4a;
+    --accent: #7c5cfc;
+    --accent2: #00d4ff;
+    --green: #00e676;
+    --red: #ff4444;
+    --yellow: #ffd740;
+    --orange: #ff9100;
+    --text: #e8eaf6;
+    --text-muted: #8b8fa8;
+    --gold: #ffd700;
+    --silver: #c0c0c0;
+    --bronze: #cd7f32;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #1a0a3a 0%, #0d1a3a 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 24px rgba(124,92,252,0.3);
+  }
+  header h1 {
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-sub { font-size: 0.8rem; color: var(--text-muted); letter-spacing: 1px; margin-top: 2px; }
+
+  /* ── Layout ── */
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    padding: 6px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 16px;
+    border: none; border-radius: 8px;
+    background: transparent; color: var(--text-muted);
+    font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(124,92,252,0.5);
+  }
+  .tab-btn:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* ── Player Cards ── */
+  .player-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .player-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .player-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .player-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .player-card[data-player="0"]::before { background: linear-gradient(90deg, #7c5cfc, #00d4ff); }
+  .player-card[data-player="1"]::before { background: linear-gradient(90deg, #ff9100, #ffd740); }
+  .player-card[data-player="2"]::before { background: linear-gradient(90deg, #00e676, #00bcd4); }
+  .player-card[data-player="3"]::before { background: linear-gradient(90deg, #ff4081, #e040fb); }
+
+  .player-name { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .player-score-big { font-size: 2rem; font-weight: 900; line-height: 1; }
+  .player-score-label { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+  .stat-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .stat-mini {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .stat-mini-val { font-size: 1.1rem; font-weight: 700; }
+  .stat-mini-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  /* ── Form ── */
+  .form-section { margin-bottom: 24px; }
+  .form-section h3 { font-size: 0.9rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent2); margin-bottom: 12px; }
+
+  .session-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; color: var(--text-muted); text-transform: uppercase; }
+  .form-group input, .form-group select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+
+  .player-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+  .player-input-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .player-input-header {
+    padding: 14px 16px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.3px;
+  }
+  .player-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+  .dot-0 { background: #7c5cfc; box-shadow: 0 0 6px rgba(124,92,252,0.6); }
+  .dot-1 { background: #ff9100; box-shadow: 0 0 6px rgba(255,145,0,0.6); }
+  .dot-2 { background: #00e676; box-shadow: 0 0 6px rgba(0,230,118,0.6); }
+  .dot-3 { background: #ff4081; box-shadow: 0 0 6px rgba(255,64,129,0.6); }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(42,47,74,0.5);
+    gap: 12px;
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .stat-row input[type="number"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 700;
+    outline: none;
+    width: 80px;
+    text-align: center;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+  .stat-row input[type="number"]::-webkit-outer-spin-button,
+  .stat-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .stat-row input[type="number"]:focus { border-color: var(--accent); }
+
+  .stat-inputs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 12px 28px;
+    border: none; border-radius: 10px;
+    font-size: 0.9rem; font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #5b3dd8);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(124,92,252,0.4);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,92,252,0.6); }
+  .btn-danger { background: rgba(255,68,68,0.15); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
+  .btn-danger:hover { background: rgba(255,68,68,0.25); }
+  .btn-secondary { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+
+  .btn-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 20px; }
+
+  /* ── Session History ── */
+  .session-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .session-item:hover { border-color: var(--accent); }
+
+  .session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .session-title { font-size: 1rem; font-weight: 700; }
+  .session-date { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+  .session-num { font-size: 0.75rem; font-weight: 600; background: var(--accent); padding: 3px 10px; border-radius: 20px; }
+
+  .session-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 14px; }
+  .session-table th {
+    text-align: left; padding: 8px 10px;
+    color: var(--text-muted); font-size: 0.72rem;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .session-table td { padding: 8px 10px; border-bottom: 1px solid rgba(42,47,74,0.5); }
+  .session-table tr:last-child td { border-bottom: none; }
+  .session-table tr.best-player td { background: rgba(0,230,118,0.05); }
+  .session-table tr.worst-player td { background: rgba(255,68,68,0.05); }
+
+  .rank-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .rank-1 { background: rgba(255,215,0,0.15); color: var(--gold); }
+  .rank-2 { background: rgba(192,192,192,0.15); color: var(--silver); }
+  .rank-3 { background: rgba(205,127,50,0.15); color: var(--bronze); }
+  .rank-4 { background: rgba(255,68,68,0.1); color: var(--red); }
+
+  /* ── Sentiment Box ── */
+  .sentiment-box {
+    background: linear-gradient(135deg, rgba(124,92,252,0.1), rgba(0,212,255,0.05));
+    border: 1px solid rgba(124,92,252,0.3);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .sentiment-mvp { color: var(--green); font-weight: 700; }
+  .sentiment-weak { color: var(--red); font-weight: 700; }
+
+  /* ── Leaderboard ── */
+  .leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: transform 0.2s;
+  }
+  .leaderboard-row:hover { transform: translateX(4px); }
+  .lb-rank { font-size: 1.4rem; font-weight: 900; width: 36px; text-align: center; }
+  .lb-name { font-weight: 700; font-size: 1rem; flex: 1; }
+  .lb-score { font-size: 1.2rem; font-weight: 900; color: var(--accent); }
+  .lb-stats { font-size: 0.75rem; color: var(--text-muted); }
+
+  /* ── Team Stats ── */
+  .team-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+  }
+  .team-stat-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .team-stat-val { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+  .team-stat-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+  /* ── Charts ── */
+  .chart-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .chart-bar-label { width: 110px; font-size: 0.8rem; font-weight: 600; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chart-bar-track { flex: 1; height: 20px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .chart-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; display: flex; align-items: center; padding-left: 6px; }
+  .chart-bar-val { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.9); }
+
+  /* ── Import/Export ── */
+  .io-section { display: flex; gap: 12px; flex-wrap: wrap; }
+  #import-area { display: none; }
+
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .big-icon { font-size: 3.5rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.9rem; line-height: 1.6; }
+
+  /* ── Utility ── */
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-yellow { color: var(--yellow); }
+  .text-accent { color: var(--accent); }
+  .text-muted { color: var(--text-muted); }
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .mt-4 { margin-top: 4px; }
+
+  .kd-ratio { font-size: 0.75rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+  .kd-good { background: rgba(0,230,118,0.15); color: var(--green); }
+  .kd-bad { background: rgba(255,68,68,0.15); color: var(--red); }
+
+  .points-breakdown { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+
+  .trophy { font-size: 1.1rem; }
+
+  /* ── Wins Hero Card ── */
+  .wins-hero-card {
+    background: linear-gradient(135deg, rgba(0,230,118,0.12) 0%, rgba(0,188,96,0.06) 100%);
+    border: 2px solid rgba(0,230,118,0.35);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    box-shadow: 0 0 32px rgba(0,230,118,0.08);
+  }
+  .wins-hero-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100px;
+  }
+  .wins-hero-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 6px;
+  }
+  .wins-hero-number {
+    font-size: 4.5rem;
+    font-weight: 900;
+    color: var(--green);
+    line-height: 1;
+    text-shadow: 0 0 24px rgba(0,230,118,0.4);
+  }
+  .wins-hero-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .wins-hero-right {
+    flex: 1;
+    min-width: 180px;
+  }
+  .wins-hero-record {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .wins-hero-record .w { color: var(--green); }
+  .wins-hero-record .l { color: var(--red); }
+  .wins-pct-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .wins-pct-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+  .wins-pct-value { font-size: 1rem; font-weight: 900; color: var(--green); }
+  .wins-progress-track {
+    height: 10px;
+    background: var(--surface2);
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .wins-progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, var(--green), #00bcd4);
+    transition: width 0.7s ease;
+    min-width: 4px;
+  }
+
+  /* ── Session Toggle ── */
+  .session-toggle {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 20px;
+  }
+  .stoggle-btn {
+    padding: 8px 14px;
+    border: none; border-radius: 8px;
+    background: transparent; color: var(--text-muted);
+    font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; letter-spacing: 0.3px;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .stoggle-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .stoggle-btn.active-all {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(124,92,252,0.4);
+  }
+  .stoggle-btn:hover:not(.active):not(.active-all) { background: var(--surface2); color: var(--text); }
+
+  .session-badge {
+    display: inline-block;
+    font-size: 0.7rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    background: rgba(124,92,252,0.2); color: var(--accent);
+    margin-left: 4px;
+  }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--accent); color: #fff;
+    padding: 12px 20px; border-radius: 10px;
+    font-weight: 600; font-size: 0.88rem;
+    box-shadow: 0 4px 20px rgba(124,92,252,0.5);
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    .container { padding: 16px 12px; }
+    .stat-inputs { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div>
+    <h1>Babes, Buybuys & 10 💣 Tracker</h1>
+    <div class="header-sub" id="header-sub">Connecting to Google Sheets…</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('history', this)">📋 History</button>
+    <button class="tab-btn" onclick="switchTab('leaderboard', this)">🏆 Leaderboard</button>
+  </div>
+
+  <div id="tab-dashboard" class="tab-content active">
+
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:20px;">
+      <div class="session-toggle" id="session-toggle" style="margin-bottom:0;flex:1;"></div>
+      <button class="btn btn-secondary" style="padding:8px 14px;font-size:0.8rem;white-space:nowrap;flex-shrink:0;" onclick="loadData(true)">↻ Refresh</button>
+    </div>
+
+    <div class="wins-hero-card" id="wins-hero-card">
+      <div class="wins-hero-left">
+        <div class="wins-hero-label">🏆 Squad Wins</div>
+        <div class="wins-hero-number" id="wins-hero-count">—</div>
+        <div class="wins-hero-sub" id="wins-hero-sub">loading…</div>
+      </div>
+      <div class="wins-hero-right">
+        <div class="wins-hero-record">
+          <span class="w" id="wins-hero-w">—</span><span style="color:var(--text-muted);font-weight:400;font-size:1rem;"> W </span>
+          <span style="color:var(--text-muted);font-weight:400;font-size:1rem;">/</span>
+          <span style="color:var(--text-muted);font-weight:400;font-size:1rem;"> </span>
+          <span class="l" id="wins-hero-l">—</span><span style="color:var(--text-muted);font-weight:400;font-size:1rem;"> L</span>
+        </div>
+        <div class="wins-pct-row">
+          <span class="wins-pct-label">Win Rate</span>
+          <span class="wins-pct-value" id="wins-hero-pct">—</span>
+        </div>
+        <div class="wins-progress-track">
+          <div class="wins-progress-fill" id="wins-hero-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="dash-team-title">Team Performance</div>
+      <div class="team-stat-grid" id="team-stats">
+        <div class="team-stat-item"><div class="team-stat-val text-accent" id="ts-sessions">—</div><div class="team-stat-lbl" id="ts-sessions-lbl">Games</div></div>
+        <div class="team-stat-item"><div class="team-stat-val text-green" id="ts-kills">—</div><div class="team-stat-lbl">Total Kills</div></div>
+        <div class="team-stat-item"><div class="team-stat-val text-yellow" id="ts-elims">—</div><div class="team-stat-lbl">Eliminations</div></div>
+        <div class="team-stat-item"><div class="team-stat-val" id="ts-assists">—</div><div class="team-stat-lbl">Assists</div></div>
+        <div class="team-stat-item"><div class="team-stat-val" id="ts-damage">—</div><div class="team-stat-lbl">Total Damage</div></div>
+        <div class="team-stat-item"><div class="team-stat-val" id="ts-redeploys">—</div><div class="team-stat-lbl">Redeploys</div></div>
+        <div class="team-stat-item"><div class="team-stat-val text-accent" id="ts-score">—</div><div class="team-stat-lbl">Team Score</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="dash-standings-title">Player Standings</div>
+      <div class="player-grid" id="player-cards"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Score Comparison</div>
+      <div id="score-chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Kills Comparison</div>
+      <div id="kills-chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Damage Comparison</div>
+      <div id="damage-chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Assists Comparison</div>
+      <div id="assists-chart"></div>
+    </div>
+
+    <div class="card" style="background:rgba(124,92,252,0.05);border-color:rgba(124,92,252,0.2);">
+      <div class="card-title">Scoring Formula</div>
+      <div style="font-size:0.88rem;color:var(--text-muted);line-height:2;display:flex;flex-wrap:wrap;gap:16px;">
+        <span><span class="text-green" style="font-weight:700;font-size:1rem;">+3</span> &nbsp;per Kill</span>
+        <span><span class="text-yellow" style="font-weight:700;font-size:1rem;">+2</span> &nbsp;per Elimination</span>
+        <span><span class="text-accent" style="font-weight:700;font-size:1rem;">+1</span> &nbsp;per Assist</span>
+        <span><span style="font-weight:700;font-size:1rem;">+1</span> &nbsp;per 100 Damage</span>
+        <span><span style="font-weight:700;font-size:1rem;color:#00d4ff;">+1.5</span> &nbsp;per Redeploy</span>
+      </div>
+    </div>
+
+    <div class="card" id="dash-empty" style="display:none">
+      <div class="empty-state">
+        <div class="big-icon">🎮</div>
+        <p>No games loaded yet.<br>Update <strong>config.js</strong> and refresh.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="tab-history" class="tab-content">
+    <div class="card" style="padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:0.8rem;font-weight:700;color:var(--text-muted);letter-spacing:0.5px;text-transform:uppercase;">Filter by Date</span>
+        <select id="history-date-filter" onchange="renderHistory()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.85rem;outline:none;cursor:pointer;flex:1;min-width:180px;">
+          <option value="all">All Dates</option>
+        </select>
+        <button class="btn btn-secondary" style="padding:8px 14px;font-size:0.8rem;" onclick="document.getElementById('history-date-filter').value='all';renderHistory()">Clear</button>
+      </div>
+    </div>
+
+    <div id="history-list">
+      <div class="empty-state">
+        <div class="big-icon">📋</div>
+        <p>No games yet. Add your Sheet ID and API key in <strong>config.js</strong>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-leaderboard" class="tab-content">
+    <div class="card">
+      <div class="card-title">🏆 Overall Leaderboard — Total Score</div>
+      <div id="lb-score"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💀 Kill Leaders</div>
+      <div id="lb-kills"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔥 Damage Leaders</div>
+      <div id="lb-damage"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🤝 Assist Leaders</div>
+      <div id="lb-assists"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏆 Win Rate</div>
+      <div id="lb-wins"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ MVP Count (games as best player)</div>
+      <div id="lb-mvp"></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
