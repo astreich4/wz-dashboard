@@ -5,7 +5,6 @@ let PLAYERS = Array.isArray(CONFIG.PLAYERS) ? [...CONFIG.PLAYERS] : [];
 let COLORS = [...DEFAULT_COLORS];
 let sessions = [];
 let dashView = 'all';
-let nightlyTotals = [];
 let currentTab = 'dashboard';
 
 function normalizeHeader(v) {
@@ -125,14 +124,12 @@ function parseCsv(text) {
   return rows;
 }
 
-function getTabConfig(tabKeyOrConfig) {
-  if (!tabKeyOrConfig) return null;
-  if (typeof tabKeyOrConfig === 'object') return tabKeyOrConfig;
-  return CONFIG.TABS?.[tabKeyOrConfig] || null;
+function getTabConfig() {
+  return CONFIG.TAB || null;
 }
 
-async function fetchSheet(tabKeyOrConfig) {
-  const tab = getTabConfig(tabKeyOrConfig);
+async function fetchSheet() {
+  const tab = getTabConfig();
   if (!tab || !CONFIG.SHEET_ID || !tab.gid) return [];
 
   const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/export?format=csv&gid=${encodeURIComponent(tab.gid)}`;
@@ -221,10 +218,6 @@ function transformGames(rows) {
   return transformed;
 }
 
-function transformNightlyTotals(rows) {
-  const records = rowsToObjects(rows);
-  return records.map(rec => ({ ...rec, date: parseDateToIso(rec.date) }));
-}
 
 function aggPlayer(playerIdx) {
   const agg = { kills:0, eliminations:0, assists:0, damage:0, redeploys:0, score:0 };
@@ -686,11 +679,8 @@ async function loadData(showMessage = false) {
     sessions = transformGames(gamesRows);
 
     try {
-      const totalsRows = await fetchSheet('nightlyTotals');
-      nightlyTotals = transformNightlyTotals(totalsRows);
     } catch {
-      nightlyTotals = [];
-    }
+          }
 
     renderAll();
     setHeaderStatus(PLAYERS.join(' · '));
@@ -698,8 +688,7 @@ async function loadData(showMessage = false) {
   } catch (err) {
     console.error(err);
     sessions = [];
-    nightlyTotals = [];
-    renderAll();
+        renderAll();
     setHeaderStatus('Unable to load sheet data');
     document.getElementById('history-list').innerHTML = `
       <div class="card">
