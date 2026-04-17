@@ -283,6 +283,10 @@ function teamAggByDate(date) {
   return agg;
 }
 
+function formatAverage(value) {
+  return Number.isFinite(value) ? value.toFixed(1) : '0.0';
+}
+
 function fmtDate(dateStr, opts) {
   if (!dateStr) return '—';
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', opts || {month:'short', day:'numeric'});
@@ -346,9 +350,14 @@ function renderDashboard() {
   document.getElementById('wins-hero-pct').textContent = noData ? '—' : winPct + '%';
   document.getElementById('wins-hero-bar').style.width = noData ? '0%' : winPct + '%';
 
+  const teamKillsElimsAvg = sessCnt ? (t.kills + t.eliminations) / sessCnt : 0;
+  const teamAssistsAvg = sessCnt ? t.assists / sessCnt : 0;
+
   document.getElementById('ts-kills').textContent     = noData ? '—' : t.kills.toLocaleString();
   document.getElementById('ts-elims').textContent     = noData ? '—' : t.eliminations.toLocaleString();
+  document.getElementById('ts-kills-elims-avg').textContent = noData ? '—' : formatAverage(teamKillsElimsAvg);
   document.getElementById('ts-assists').textContent   = noData ? '—' : t.assists.toLocaleString();
+  document.getElementById('ts-assists-avg').textContent = noData ? '—' : formatAverage(teamAssistsAvg);
   document.getElementById('ts-damage').textContent    = noData ? '—' : t.damage.toLocaleString();
   document.getElementById('ts-redeploys').textContent = noData ? '—' : t.redeploys.toLocaleString();
   document.getElementById('ts-score').textContent     = noData ? '—' : t.score.toLocaleString();
@@ -682,13 +691,13 @@ async function loadData(showMessage = false) {
     } catch {
           }
 
-    renderAll();
+    renderAll(); renderStats();
     setHeaderStatus(PLAYERS.join(' · '));
     if (showMessage) showToast(`Loaded ${sessions.length} game${sessions.length !== 1 ? 's' : ''} from the public sheet ✅`);
   } catch (err) {
     console.error(err);
     sessions = [];
-        renderAll();
+        renderAll(); renderStats();
     setHeaderStatus('Unable to load sheet data');
     document.getElementById('history-list').innerHTML = `
       <div class="card">
@@ -709,3 +718,179 @@ function renderAll() {
 }
 
 loadData();
+
+function mean(arr) {
+  return arr.reduce((a,b)=>a+b,0) / (arr.length || 1);
+}
+
+function stddev(arr) {
+  const m = mean(arr);
+  return Math.sqrt(mean(arr.map(x => (x-m)**2)));
+}
+
+
+function renderStats() {
+  const container = document.getElementById("stats-table");
+  if (!container) return;
+
+  const players = CONFIG.PLAYERS;
+  const recentSessions = sessions.slice(-10);
+
+  function getStatsForPlayer(sourceSessions, i) {
+    const kills = sourceSessions.map(s => s.players[i]?.kills || 0);
+    const assists = sourceSessions.map(s => s.players[i]?.assists || 0);
+    const damage = sourceSessions.map(s => s.players[i]?.damage || 0);
+
+    return {
+      killsAvgNum: sourceSessions.length ? mean(kills) : 0,
+      killsStdNum: sourceSessions.length ? stddev(kills) : 0,
+      assistsAvgNum: sourceSessions.length ? mean(assists) : 0,
+      assistsStdNum: sourceSessions.length ? stddev(assists) : 0,
+      damageAvgNum: sourceSessions.length ? mean(damage) : 0,
+      damageStdNum: sourceSessions.length ? stddev(damage) : 0
+    };
+  }
+
+  function fmt(num, decimals = 2) {
+    return Number(num || 0).toFixed(decimals);
+  }
+
+  function fmtDamage(num) {
+    return Math.round(num || 0).toLocaleString();
+  }
+
+  function deltaClass(delta) {
+    if (delta > 0.05) return 'trend-up';
+    if (delta < -0.05) return 'trend-down';
+    return 'trend-flat';
+  }
+
+  function deltaText(delta, isDamage = false) {
+    const abs = Math.abs(delta);
+    const formatted = isDamage ? Math.round(abs).toLocaleString() : abs.toFixed(2);
+    if (abs < 0.05) return '≈ Flat';
+    return delta > 0 ? `▲ ${formatted}` : `▼ ${formatted}`;
+  }
+
+  function trendChip(recentKills, allTimeKills) {
+    const diff = recentKills - allTimeKills;
+    if (diff > 0.05) return '<span class="stats-trend-chip trend-up">Recent kills trending up</span>';
+    if (diff < -0.05) return '<span class="stats-trend-chip trend-down">Recent kills trending down</span>';
+    return '<span class="stats-trend-chip trend-flat">Recent kills steady</span>';
+  }
+
+  const summaryCards = `
+    <div class="stats-summary-grid">
+      <div class="stats-summary-card">
+        <div class="stats-summary-label">All Time</div>
+        <div class="stats-summary-title">Full baseline</div>
+        <div class="stats-summary-copy">${sessions.length} game${sessions.length === 1 ? '' : 's'} included. Use this as the long-run performance benchmark for each player.</div>
+      </div>
+      <div class="stats-summary-card">
+        <div class="stats-summary-label">Last 10 Games</div>
+        <div class="stats-summary-title">Recent form</div>
+        <div class="stats-summary-copy">${recentSessions.length} most recent game${recentSessions.length === 1 ? '' : 's'} included. Compare this against all-time numbers to spot current trends.</div>
+      </div>
+    </div>
+  `;
+
+  const cards = players.map((name, i) => {
+    const allTime = getStatsForPlayer(sessions, i);
+    const recent = getStatsForPlayer(recentSessions, i);
+
+    const killsDelta = recent.killsAvgNum - allTime.killsAvgNum;
+    const assistsDelta = recent.assistsAvgNum - allTime.assistsAvgNum;
+    const damageDelta = recent.damageAvgNum - allTime.damageAvgNum;
+
+    return `
+      <div class="stats-player-card" data-player="${i}">
+        <div class="stats-player-header">
+          <div>
+            <div class="stats-player-name">${name}</div>
+            <div class="stats-player-sub">All-time baseline vs last 10 games</div>
+          </div>
+          ${trendChip(recent.killsAvgNum, allTime.killsAvgNum)}
+        </div>
+
+        <div class="stats-hero-grid">
+          <div class="stats-hero-box">
+            <div class="stats-hero-label">Kills Avg</div>
+            <div class="stats-hero-value text-green">${fmt(recent.killsAvgNum)}</div>
+            <div class="stats-hero-delta ${deltaClass(killsDelta)}">${deltaText(killsDelta)} vs all time</div>
+          </div>
+          <div class="stats-hero-box">
+            <div class="stats-hero-label">Assists Avg</div>
+            <div class="stats-hero-value">${fmt(recent.assistsAvgNum)}</div>
+            <div class="stats-hero-delta ${deltaClass(assistsDelta)}">${deltaText(assistsDelta)} vs all time</div>
+          </div>
+          <div class="stats-hero-box">
+            <div class="stats-hero-label">Damage Avg</div>
+            <div class="stats-hero-value">${fmtDamage(recent.damageAvgNum)}</div>
+            <div class="stats-hero-delta ${deltaClass(damageDelta)}">${deltaText(damageDelta, true)} vs all time</div>
+          </div>
+        </div>
+
+        <div class="stats-breakdown">
+          <div class="stats-breakdown-col">
+            <div class="stats-breakdown-title">All Time</div>
+            <div class="stats-row">
+              <div class="stats-row-label">Kills Avg</div>
+              <div class="stats-row-value text-green">${fmt(allTime.killsAvgNum)}<small>/game</small></div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Kills Std Dev</div>
+              <div class="stats-row-value">${fmt(allTime.killsStdNum)}</div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Assists Avg</div>
+              <div class="stats-row-value">${fmt(allTime.assistsAvgNum)}<small>/game</small></div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Assists Std Dev</div>
+              <div class="stats-row-value">${fmt(allTime.assistsStdNum)}</div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Damage Avg</div>
+              <div class="stats-row-value">${fmtDamage(allTime.damageAvgNum)}<small>/game</small></div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Damage Std Dev</div>
+              <div class="stats-row-value">${fmtDamage(allTime.damageStdNum)}</div>
+            </div>
+          </div>
+
+          <div class="stats-breakdown-col">
+            <div class="stats-breakdown-title">Last 10 Games</div>
+            <div class="stats-row">
+              <div class="stats-row-label">Kills Avg</div>
+              <div class="stats-row-value text-green">${fmt(recent.killsAvgNum)}<small>/game</small></div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Kills Std Dev</div>
+              <div class="stats-row-value">${fmt(recent.killsStdNum)}</div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Assists Avg</div>
+              <div class="stats-row-value">${fmt(recent.assistsAvgNum)}<small>/game</small></div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Assists Std Dev</div>
+              <div class="stats-row-value">${fmt(recent.assistsStdNum)}</div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Damage Avg</div>
+              <div class="stats-row-value">${fmtDamage(recent.damageAvgNum)}<small>/game</small></div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-row-label">Damage Std Dev</div>
+              <div class="stats-row-value">${fmtDamage(recent.damageStdNum)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = summaryCards + `<div class="stats-player-grid">${cards}</div>`;
+}
+
