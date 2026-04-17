@@ -1,6 +1,6 @@
 # Warzone Dashboard Repo
 
-This repo is a static Google Sheets-powered dashboard styled after your uploaded `test.html`, using the sheet's **public CSV export URL** for a single games tab.
+This repo is a static Google Sheets-powered dashboard using the sheet's **public CSV export URL** for a single games tab.
 
 ## Files
 - `index.html` — dashboard UI
