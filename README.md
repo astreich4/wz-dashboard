@@ -1,27 +1,27 @@
-# Warzone Dashboard Repo (No API Key Required)
+# Warzone Dashboard Repo
 
-This repo is a static Google Sheets-powered dashboard styled after your uploaded `test.html`, but it uses the sheet's **public CSV export URLs** instead of the Google Sheets API.
+This repo is a static Google Sheets-powered dashboard styled after your uploaded `test.html`, using the sheet's **public CSV export URL** for a single games tab.
 
 ## Files
 - `index.html` — dashboard UI
 - `app.js` — public-sheet fetch + transform + dashboard logic
 - `config.js` — your sheet config
-- `.nojekyll` — recommended for GitHub Pages
+- `.nojekyll` — optional for GitHub Pages
 
 ## Setup
 1. Open `config.js`
 2. Replace `YOUR_GOOGLE_SHEET_ID`
-3. Set the `gid` for each tab you want to load
+3. Set the `gid` for your games tab
 4. Make your Google Sheet public as **Anyone with the link → Viewer**
 5. Push these files to GitHub
 6. Enable **GitHub Pages** for the repo
 
-## How to find each tab gid
-Open the sheet and click the tab.
+## How to find the tab gid
+Open the sheet and click the games tab.
 The URL will end with something like `#gid=123456789`.
 That number is the tab's `gid`.
 
-## Expected games-tab columns
+## Expected columns
 The dashboard is built for the same format as your uploaded CSV:
 - `Date`
 - `Game Id`
@@ -40,4 +40,4 @@ The dashboard is built for the same format as your uploaded CSV:
 - No API key is needed
 - The sheet must be public/viewable
 - The dashboard is read-only
-- The nightly totals tab is optional in this version; the app will try to load it if you provide a valid `gid`
+- All nightly and all-time totals are calculated from the games tab
